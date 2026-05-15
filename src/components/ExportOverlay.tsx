@@ -1,37 +1,37 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { ExportStatus } from "@/lib/types";
 import LottiePlayer from "./LottiePlayer";
 
 interface Props {
   status: ExportStatus;
   progress: number;
+  onCancel: () => void;
 }
 
-export default function ExportOverlay({ status, progress }: Props) {
-  const [animationData, setAnimationData] = useState<object | null>(null);
-
+export default function ExportOverlay({ status, progress, onCancel }: Props) {
   const visible = status === "loading-engine" || status === "exporting";
-
   const isLoading = status === "loading-engine";
 
   useEffect(() => {
-    let mounted = true;
+    if (!visible) return;
 
-    import("@/lib/lottie/spinner.json").then((data) => {
-      if (mounted) {
-        setAnimationData(data.default);
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        onCancel();
       }
-    });
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
 
     return () => {
-      mounted = false;
+      window.removeEventListener("keydown", handleKeyDown);
     };
-  }, []);
+  }, [visible, onCancel]);
 
-   if (!visible) return null;
-   
+  if (!visible) return null;
+
   return (
     <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-white/95 backdrop-blur-sm">
       <div className="text-center space-y-6 max-w-xs px-6 animate-fade-in">
@@ -64,6 +64,11 @@ export default function ExportOverlay({ status, progress }: Props) {
           <div className="w-full space-y-2">
             <div className="h-1 w-full bg-film-100 rounded-full overflow-hidden">
               <div
+                role="progressbar"
+                aria-valuenow={progress}
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-label="Export progress"
                 className="h-full bg-film-600 rounded-full transition-all duration-300"
                 style={{ width: `${progress}%` }}
               />
@@ -71,6 +76,9 @@ export default function ExportOverlay({ status, progress }: Props) {
 
             <p className="text-xs font-heading font-semibold text-[var(--muted)]">
               {progress}%
+            </p>
+            <p className="text-gray-500 text-xs mt-4">
+              Press Escape to cancel
             </p>
           </div>
         )}

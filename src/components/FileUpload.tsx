@@ -21,24 +21,19 @@ export default function FileUpload({ onFileSelect, currentFile }: Props) {
 
   const [dragging, setDragging] = useState(false);
 
-  const [animationData, setAnimationData] = useState<object | null>(null);
-
   useEffect(() => {
-    let mounted = true;
-
-    import("@/lib/lottie/upload.json").then((data) => {
-      if (mounted) {
-        setAnimationData(data.default);
+    const handleOpenShortcut = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "o") {
+        e.preventDefault();
+        inputRef.current?.click();
       }
-    });
-
-    return () => {
-      mounted = false;
     };
+
+    document.addEventListener("keydown", handleOpenShortcut);
+    return () => document.removeEventListener("keydown", handleOpenShortcut);
   }, []);
 
   const handleFile = (file: File) => {
-    if (!file.type.startsWith("video/")) return;
     onFileSelect(file);
   };
 
@@ -71,7 +66,7 @@ export default function FileUpload({ onFileSelect, currentFile }: Props) {
           onClick={() => inputRef.current?.click()}
           className="text-xs font-heading font-semibold text-film-600 hover:text-film-700 uppercase tracking-wide shrink-0 transition-colors cursor-pointer"
         >
-          Change
+          Change <span className="text-[var(--muted)]">(Ctrl+O / Cmd+O)</span>
         </button>
 
         <input
@@ -90,13 +85,13 @@ export default function FileUpload({ onFileSelect, currentFile }: Props) {
 
   return (
     <div
-      onDragOver={(e) => {
-        e.preventDefault();
-        setDragging(true);
-      }}
+      role="button"
+      tabIndex={0}
+      onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
       onDragLeave={() => setDragging(false)}
       onDrop={handleDrop}
       onClick={() => inputRef.current?.click()}
+      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") inputRef.current?.click(); }}
       className={cn(
         "group flex flex-col items-center justify-center gap-4 py-12 px-6",
         "border-2 border-dashed rounded-xl cursor-pointer transition-all duration-200",
@@ -121,13 +116,19 @@ export default function FileUpload({ onFileSelect, currentFile }: Props) {
         <p className="text-sm text-[var(--muted)] mt-1">
           or click to browse
         </p>
+        <p className="text-xs text-[var(--muted)] mt-2 font-heading">
+          Ctrl+O / Cmd+O
+        </p>
       </div>
 
       <div className="flex items-center gap-2 px-4 py-2 bg-[var(--surface)] border border-[var(--border)] rounded-lg text-sm font-heading font-medium text-[var(--muted)]">
-        <FolderOpen size={14} />
+      <FolderOpen size={14} />
         MP4 / MOV / AVI / WebM
       </div>
-
+      <p className="text-xs text-gray-500">
+        Supports: MP4, MOV, AVI, MKV, WebM, and most video formats
+      </p>
+      
       <input
         ref={inputRef}
         type="file"
