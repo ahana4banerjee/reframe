@@ -1,10 +1,10 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { ExportResult } from "@/lib/types";
 import { formatBytes } from "@/lib/ffmpeg";
 import { Download, RotateCcw } from "lucide-react";
 import LottiePlayer from "./LottiePlayer";
-import successAnim from "@/lib/lottie/success.json";
 
 interface Props {
   result: ExportResult;
@@ -12,17 +12,49 @@ interface Props {
 }
 
 export default function DownloadResult({ result, onReset }: Props) {
+  const [animationData, setAnimationData] = useState<object | null>(null);
+
   const filename = `reframe_${result.width}x${result.height}.${result.format}`;
+
+  useEffect(() => {
+    let mounted = true;
+
+    import("@/lib/lottie/success.json").then((data) => {
+      if (mounted) {
+        setAnimationData(data.default);
+      }
+    });
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   return (
     <div className="p-5 bg-[var(--surface)] border border-[var(--border)] rounded-xl space-y-4">
       <div className="flex items-center gap-4">
-        <div className="w-12 h-12 shrink-0">
-          <LottiePlayer animationData={successAnim} loop={false} autoplay />
+
+        <div className="w-12 h-12 shrink-0 flex items-center justify-center">
+          {animationData ? (
+            <LottiePlayer
+              animationData={animationData}
+              loop={false}
+              autoplay
+            />
+          ) : (
+            <div className="w-12 h-12 rounded-full bg-film-100 animate-pulse" />
+          )}
         </div>
+
         <div>
-          <p className="font-heading font-bold text-base text-[var(--text)]">Export complete</p>
-          <p className="text-xs text-[var(--muted)] mt-0.5">Ready to download</p>
+          <p className="font-heading font-bold text-base text-[var(--text)]">
+            Export complete
+          </p>
+
+          <p className="text-xs text-[var(--muted)] mt-0.5">
+            Ready to download
+          </p>
+
           <p className="text-sm text-[var(--text)]">
             Resolution: {result.width} × {result.height}
           </p>
@@ -30,17 +62,30 @@ export default function DownloadResult({ result, onReset }: Props) {
       </div>
 
       <div className="grid grid-cols-2 gap-2 text-sm">
+
         <div className="bg-[var(--bg)] rounded-lg p-3 border border-[var(--border)]">
-          <p className="text-[10px] font-heading font-semibold uppercase tracking-wider text-[var(--muted)] mb-1">Resolution</p>
-          <p className="font-heading font-bold text-[var(--text)]">{result.width} x {result.height}</p>
+          <p className="text-[10px] font-heading font-semibold uppercase tracking-wider text-[var(--muted)] mb-1">
+            Resolution
+          </p>
+
+          <p className="font-heading font-bold text-[var(--text)]">
+            {result.width} x {result.height}
+          </p>
         </div>
+
         <div className="bg-[var(--bg)] rounded-lg p-3 border border-[var(--border)]">
-          <p className="text-[10px] font-heading font-semibold uppercase tracking-wider text-[var(--muted)] mb-1">File size</p>
-          <p className="font-heading font-bold text-[var(--text)]">{formatBytes(result.size)}</p>
+          <p className="text-[10px] font-heading font-semibold uppercase tracking-wider text-[var(--muted)] mb-1">
+            File size
+          </p>
+
+          <p className="font-heading font-bold text-[var(--text)]">
+            {formatBytes(result.size)}
+          </p>
         </div>
       </div>
 
       <div className="flex gap-2">
+
         <a
           href={result.blobUrl}
           download={filename}
@@ -49,6 +94,7 @@ export default function DownloadResult({ result, onReset }: Props) {
           <Download size={15} />
           Download {result.format.toUpperCase()}
         </a>
+
         <button
           type="button"
           onClick={onReset}
@@ -57,6 +103,7 @@ export default function DownloadResult({ result, onReset }: Props) {
           <RotateCcw size={14} />
           New
         </button>
+
       </div>
     </div>
   );

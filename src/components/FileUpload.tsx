@@ -1,9 +1,8 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Film, FolderOpen } from "lucide-react";
 import LottiePlayer from "./LottiePlayer";
-import uploadAnim from "@/lib/lottie/upload.json";
 import { cn } from "@/lib/utils";
 
 interface Props {
@@ -19,7 +18,24 @@ function fmt(bytes: number) {
 
 export default function FileUpload({ onFileSelect, currentFile }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
+
   const [dragging, setDragging] = useState(false);
+
+  const [animationData, setAnimationData] = useState<object | null>(null);
+
+  useEffect(() => {
+    let mounted = true;
+
+    import("@/lib/lottie/upload.json").then((data) => {
+      if (mounted) {
+        setAnimationData(data.default);
+      }
+    });
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   const handleFile = (file: File) => {
     if (!file.type.startsWith("video/")) return;
@@ -29,7 +45,9 @@ export default function FileUpload({ onFileSelect, currentFile }: Props) {
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     setDragging(false);
+
     const file = e.dataTransfer.files[0];
+
     if (file) handleFile(file);
   };
 
@@ -37,12 +55,17 @@ export default function FileUpload({ onFileSelect, currentFile }: Props) {
     return (
       <div className="flex items-center gap-3 px-4 py-3 bg-film-50 border border-film-200 rounded-lg">
         <Film size={18} className="text-film-600 shrink-0" />
+
         <div className="flex-1 min-w-0">
           <p className="text-sm font-medium font-heading truncate text-[var(--text)]">
             {currentFile.name}
           </p>
-          <p className="text-xs text-[var(--muted)]">{fmt(currentFile.size)}</p>
+
+          <p className="text-xs text-[var(--muted)]">
+            {fmt(currentFile.size)}
+          </p>
         </div>
+
         <button
           type="button"
           onClick={() => inputRef.current?.click()}
@@ -50,6 +73,7 @@ export default function FileUpload({ onFileSelect, currentFile }: Props) {
         >
           Change
         </button>
+
         <input
           ref={inputRef}
           type="file"
@@ -66,7 +90,10 @@ export default function FileUpload({ onFileSelect, currentFile }: Props) {
 
   return (
     <div
-      onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
+      onDragOver={(e) => {
+        e.preventDefault();
+        setDragging(true);
+      }}
       onDragLeave={() => setDragging(false)}
       onDrop={handleDrop}
       onClick={() => inputRef.current?.click()}
@@ -78,14 +105,19 @@ export default function FileUpload({ onFileSelect, currentFile }: Props) {
           : "border-[var(--border)] bg-[var(--bg)] hover:border-film-400 hover:bg-film-50/40"
       )}
     >
-      <div className="w-20 h-20 opacity-80 group-hover:opacity-100 transition-opacity group-hover:scale-110 duration-200">
-        <LottiePlayer animationData={uploadAnim} loop autoplay />
+      <div className="w-20 h-20 opacity-80 group-hover:opacity-100 transition-opacity group-hover:scale-110 duration-200 flex items-center justify-center">
+        {animationData ? (
+          <LottiePlayer animationData={animationData} loop autoplay />
+        ) : (
+          <div className="w-20 h-20 rounded-full bg-film-100 animate-pulse" />
+        )}
       </div>
 
       <div className="text-center">
         <p className="font-heading font-semibold text-[var(--text)] text-base">
           Drop a video file here
         </p>
+
         <p className="text-sm text-[var(--muted)] mt-1">
           or click to browse
         </p>
