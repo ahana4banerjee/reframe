@@ -17,20 +17,23 @@ function fmt(bytes: number) {
 }
 
 export default function FileUpload({ onFileSelect, currentFile }: Props) {
+  const [animationData, setAnimationData] = useState<object | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const [dragging, setDragging] = useState(false);
 
   useEffect(() => {
-    const handleOpenShortcut = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "o") {
-        e.preventDefault();
-        inputRef.current?.click();
-      }
-    };
+    let mounted = true;
 
-    document.addEventListener("keydown", handleOpenShortcut);
-    return () => document.removeEventListener("keydown", handleOpenShortcut);
+    import("@/lib/lottie/upload.json").then((data) => {
+      if (mounted) {
+        setAnimationData(data.default);
+      }
+    });
+
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   const handleFile = (file: File) => {

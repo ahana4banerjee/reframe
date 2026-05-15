@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { ExportStatus } from "@/lib/types";
 import LottiePlayer from "./LottiePlayer";
 
@@ -11,24 +11,23 @@ interface Props {
 }
 
 export default function ExportOverlay({ status, progress, onCancel }: Props) {
+  const [animationData, setAnimationData] = useState<object | null>(null);
   const visible = status === "loading-engine" || status === "exporting";
   const isLoading = status === "loading-engine";
 
   useEffect(() => {
-    if (!visible) return;
+    let mounted = true;
 
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        onCancel();
+    import("@/lib/lottie/spinner.json").then((data) => {
+      if (mounted) {
+        setAnimationData(data.default);
       }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
+    });
 
     return () => {
-      window.removeEventListener("keydown", handleKeyDown);
+      mounted = false;
     };
-  }, [visible, onCancel]);
+  }, []);
 
   if (!visible) return null;
 
@@ -38,14 +37,15 @@ export default function ExportOverlay({ status, progress, onCancel }: Props) {
         className="text-center space-y-6 max-w-xs px-6 animate-fade-in" 
         aria-live="polite"
       >
-        <div className="mx-auto w-20 h-20">
-          <LottiePlayer 
-            animationData={spinnerAnim} 
-            loop 
-            autoplay 
-            aria-hidden="true" 
-          />
-        </div>
+        {animationData ? (
+  <LottiePlayer
+    animationData={animationData}
+    loop
+    autoplay
+  />
+) : (
+  <div className="w-20 h-20 animate-pulse rounded-full bg-film-100" />
+)}
 
         <span className="sr-only">
           {status === 'loading-engine' ? 'Loading video engine...' : `Exporting: ${progress}%`}
