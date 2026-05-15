@@ -110,7 +110,11 @@ export default function FileUpload({ onFileSelect, currentFile }: Props) {
 
       <div className="text-center">
         <p className="font-heading font-semibold text-[var(--text)] text-base">
-          Drop a video file here
+          {dragging
+            ? "Release to upload"
+            : "Drag & Drop your video in here"
+          
+          }
         </p>
 
         <p className="text-sm text-[var(--muted)] mt-1">
