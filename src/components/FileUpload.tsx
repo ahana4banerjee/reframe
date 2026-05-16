@@ -16,6 +16,15 @@ function fmt(bytes: number) {
     : `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
+function formatDuration(seconds: number) {  //1
+  const mins = Math.floor(seconds / 60);
+  const secs = Math.floor(seconds % 60);
+  return `${mins.toString().padStart(2, "0")}:${secs
+  .toString()
+  .padStart(2, "0")}`;
+}
+
+
 export default function FileUpload({ onFileSelect, currentFile }: Props) {
   const [animationData, setAnimationData] = useState<object | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -36,9 +45,9 @@ export default function FileUpload({ onFileSelect, currentFile }: Props) {
     };
   }, []);
 
-  const handleFile = (file: File) => {
     onFileSelect(file);
   };
+
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
@@ -48,6 +57,7 @@ export default function FileUpload({ onFileSelect, currentFile }: Props) {
 
     if (file) handleFile(file);
   };
+  
 
   if (currentFile) {
     return (

@@ -15,6 +15,22 @@ export default function ExportOverlay({ status, progress, onCancel }: Props) {
   const visible = status === "loading-engine" || status === "exporting";
   const isLoading = status === "loading-engine";
 
+  const previousFocusRef = useRef<HTMLElement | null>(null);
+  const focusAnchorRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (visible) {
+      previousFocusRef.current =
+        document.activeElement as HTMLElement;
+    }
+  }, [visible]);
+
+  useEffect(() => {
+    if (!visible && previousFocusRef.current) {
+      previousFocusRef.current.focus();
+    }
+  }, [visible]);
+
   useEffect(() => {
     let mounted = true;
 
@@ -84,12 +100,37 @@ export default function ExportOverlay({ status, progress, onCancel }: Props) {
             <p className="text-xs font-heading font-semibold text-[var(--muted)]">
               {progress}%
             </p>
-            <p className="text-gray-500 text-xs mt-4">
-              Press Escape to cancel
+  
+            <p className="text-xs font-heading font-semibold text-film-600 mt-2 uppercase tracking-wide">
+              Do not close or refresh this tab
             </p>
           </div>
-        )}
+  
+          {status === "exporting" && (
+            <div className="w-full space-y-2">
+              <div className="h-1 w-full bg-film-100 rounded-full overflow-hidden">
+                <div
+                  role="progressbar"
+                  aria-valuenow={progress}
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                  aria-label="Export progress"
+                  className="h-full bg-film-600 rounded-full transition-all duration-300"
+                  style={{ width: `${progress}%` }}
+                />
+              </div>
+  
+              <p className="text-xs font-heading font-semibold text-[var(--muted)]">
+                {progress}%
+              </p>
+  
+              <p className="text-gray-500 text-xs mt-4">
+                Press Escape to cancel
+              </p>
+            </div>
+          )}
+        </div>
       </div>
-    </div>
+    </FocusTrap>
   );
 }
