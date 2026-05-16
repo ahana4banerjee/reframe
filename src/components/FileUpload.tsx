@@ -16,20 +16,12 @@ function fmt(bytes: number) {
     : `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-function formatDuration(seconds: number) {  //1
-  const mins = Math.floor(seconds / 60);
-  const secs = Math.floor(seconds % 60);
-  return `${mins.toString().padStart(2, "0")}:${secs
-  .toString()
-  .padStart(2, "0")}`;
-}
-
-
 export default function FileUpload({ onFileSelect, currentFile }: Props) {
-  const [animationData, setAnimationData] = useState<object | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const [dragging, setDragging] = useState(false);
+
+  const [animationData, setAnimationData] = useState<object | null>(null);
 
   useEffect(() => {
     let mounted = true;
@@ -45,9 +37,10 @@ export default function FileUpload({ onFileSelect, currentFile }: Props) {
     };
   }, []);
 
+  const handleFile = (file: File) => {
+    if (!file.type.startsWith("video/")) return;
     onFileSelect(file);
   };
-
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
@@ -57,7 +50,6 @@ export default function FileUpload({ onFileSelect, currentFile }: Props) {
 
     if (file) handleFile(file);
   };
-  
 
   if (currentFile) {
     return (
@@ -79,7 +71,7 @@ export default function FileUpload({ onFileSelect, currentFile }: Props) {
           onClick={() => inputRef.current?.click()}
           className="text-xs font-heading font-semibold text-film-600 hover:text-film-700 uppercase tracking-wide shrink-0 transition-colors cursor-pointer"
         >
-          Change <span className="text-[var(--muted)]">(Ctrl+O / Cmd+O)</span>
+          Change
         </button>
 
         <input
@@ -98,13 +90,13 @@ export default function FileUpload({ onFileSelect, currentFile }: Props) {
 
   return (
     <div
-      role="button"
-      tabIndex={0}
-      onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
+      onDragOver={(e) => {
+        e.preventDefault();
+        setDragging(true);
+      }}
       onDragLeave={() => setDragging(false)}
       onDrop={handleDrop}
       onClick={() => inputRef.current?.click()}
-      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") inputRef.current?.click(); }}
       className={cn(
         "group flex flex-col items-center justify-center gap-4 py-12 px-6",
         "border-2 border-dashed rounded-xl cursor-pointer transition-all duration-200",
@@ -123,29 +115,19 @@ export default function FileUpload({ onFileSelect, currentFile }: Props) {
 
       <div className="text-center">
         <p className="font-heading font-semibold text-[var(--text)] text-base">
-          {dragging
-            ? "Release to upload"
-            : "Drag & Drop your video in here"
-          
-          }
+          Drop a video file here
         </p>
 
         <p className="text-sm text-[var(--muted)] mt-1">
           or click to browse
         </p>
-        <p className="text-xs text-[var(--muted)] mt-2 font-heading">
-          Ctrl+O / Cmd+O
-        </p>
       </div>
 
       <div className="flex items-center gap-2 px-4 py-2 bg-[var(--surface)] border border-[var(--border)] rounded-lg text-sm font-heading font-medium text-[var(--muted)]">
-      <FolderOpen size={14} />
+        <FolderOpen size={14} />
         MP4 / MOV / AVI / WebM
       </div>
-      <p className="text-xs text-gray-500">
-        Supports: MP4, MOV, AVI, MKV, WebM, and most video formats
-      </p>
-      
+
       <input
         ref={inputRef}
         type="file"
