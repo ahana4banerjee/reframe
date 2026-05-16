@@ -1,25 +1,30 @@
 "use client";
 
 import { useState, useCallback, useEffect, useRef } from "react";
-import { EditRecipe, ExportResult, ExportStatus, DEFAULT_RECIPE } from "@/lib/types";
-import { loadFFmpeg, exportVideo, terminateFFmpeg } from "@/lib/ffmpeg";
+import { EditRecipe, ExportResult, ExportStatus } from "@/lib/types";
+import { DEFAULT_RECIPE } from "@/lib/constants";
+import { loadFFmpeg, exportVideo, terminateFFmpeg, FFmpegLoadError } from "@/lib/ffmpeg";
 
 const DEFAULT_TITLE = "Reframe — Resize, trim, and export videos in your browser";
 
-function getVideoDuration(file: File): Promise<number> {
+export function extractMetadata(file: File): Promise<{ width: number; height: number; duration: number }> {
   return new Promise((resolve, reject) => {
-    const video = document.createElement("video");
-    video.preload = "metadata";
     const url = URL.createObjectURL(file);
-    video.src = url;
+    const video = document.createElement('video');
+    video.preload = 'metadata';
     video.onloadedmetadata = () => {
+      resolve({
+        width: video.videoWidth,
+        height: video.videoHeight,
+        duration: isFinite(video.duration) ? video.duration : 0,
+      });
       URL.revokeObjectURL(url);
-      resolve(isFinite(video.duration) ? video.duration : 0);
     };
     video.onerror = () => {
       URL.revokeObjectURL(url);
-      reject(new Error("Failed to load video metadata. The file may be corrupt or simply not a video."));
+      reject(new Error('Failed to load video metadata'));
     };
+    video.src = url;
   });
 }
 
@@ -95,7 +100,7 @@ export function useVideoEditor() {
     }
 
     try {
-      const dur = await getVideoDuration(selectedFile);
+      const { duration: dur } = await extractMetadata(selectedFile);
       setDuration(dur);
       setFile(selectedFile);
       setRecipe((prev) => ({ ...prev, trimStart: 0, trimEnd: null }));
@@ -107,6 +112,9 @@ export function useVideoEditor() {
 
   const handleExport = useCallback(async () => {
     if (!file) return;
+    if (status === "loading-engine" || status === "exporting") {
+      return;
+    }
 
     const abortController = new AbortController();
     exportAbortControllerRef.current = abortController;
@@ -116,6 +124,7 @@ export function useVideoEditor() {
       setStatus("loading-engine");
       setProgress(0);
       setError(null);
+      if (result?.blobUrl) URL.revokeObjectURL(result.blobUrl);
       setResult(null);
 
       const ffmpeg = await loadFFmpeg(abortController.signal);
@@ -138,14 +147,18 @@ export function useVideoEditor() {
       if (exportCancelledRef.current) return;
 
       console.error("export failed:", err);
-      setError(err instanceof Error ? err.message : "something went wrong");
+      if (err instanceof FFmpegLoadError) {
+        setError(err.message);
+      } else {
+        setError(err instanceof Error ? err.message : "something went wrong");
+      }
       setStatus("error");
     } finally {
       if (exportAbortControllerRef.current === abortController) {
         exportAbortControllerRef.current = null;
       }
     }
-  }, [file, recipe]);
+  }, [file, recipe, result]);
 
   useEffect(() => {
     if (file) {
@@ -164,7 +177,8 @@ export function useVideoEditor() {
         (e.ctrlKey || e.metaKey) &&
         e.key === "Enter" &&
         file &&
-        status === "idle"
+        status !== "loading-engine" &&
+        status !== "exporting"
       ) {
         handleExport();
       }
@@ -187,7 +201,12 @@ export function useVideoEditor() {
     setError(null);
   }, []);
 
+  const resetSettings = useCallback(() => {
+    setRecipe(DEFAULT_RECIPE);
+  }, []);
+
   const reset = useCallback(() => {
+    if (result?.blobUrl) URL.revokeObjectURL(result.blobUrl);
     setFile(null);
     setDuration(0);
     setRecipe(DEFAULT_RECIPE);
@@ -195,7 +214,7 @@ export function useVideoEditor() {
     setProgress(0);
     setResult(null);
     setError(null);
-  }, []);
+  }, [result]);
 
   // Development-only memory monitoring during export
   useEffect(() => {
@@ -225,5 +244,6 @@ export function useVideoEditor() {
     handleExport,
     cancelExport,
     reset,
+    resetSettings,
   };
 }
