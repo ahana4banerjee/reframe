@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Film, FolderOpen } from "lucide-react";
 import LottiePlayer from "./LottiePlayer";
-import uploadAnim from "@/lib/lottie/upload.json";
 import { cn } from "@/lib/utils";
 
 interface Props {
@@ -20,18 +19,31 @@ function fmt(bytes: number) {
 export default function FileUpload({ onFileSelect, currentFile }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [dragging, setDragging] = useState(false);
+  const [animationData, setAnimationData] = useState<object | null>(null);
 
   useEffect(() => {
-    const handleOpenShortcut = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "o") {
-        e.preventDefault();
-        inputRef.current?.click();
-      }
-    };
+  let mounted = true;
 
-    document.addEventListener("keydown", handleOpenShortcut);
-    return () => document.removeEventListener("keydown", handleOpenShortcut);
-  }, []);
+  import("@/lib/lottie/upload.json").then((data) => {
+    if (mounted) {
+      setAnimationData(data.default);
+    }
+  });
+
+  const handleOpenShortcut = (e: KeyboardEvent) => {
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "o") {
+      e.preventDefault();
+      inputRef.current?.click();
+    }
+  };
+
+  document.addEventListener("keydown", handleOpenShortcut);
+
+  return () => {
+    mounted = false;
+    document.removeEventListener("keydown", handleOpenShortcut);
+  };
+}, []);
 
   const handleFile = (file: File) => {
     onFileSelect(file);
@@ -93,7 +105,11 @@ export default function FileUpload({ onFileSelect, currentFile }: Props) {
       )}
     >
       <div className="w-20 h-20 opacity-80 group-hover:opacity-100 transition-opacity group-hover:scale-110 duration-200">
-        <LottiePlayer animationData={uploadAnim} loop autoplay />
+        {animationData ? (
+  <LottiePlayer animationData={animationData} loop autoplay />
+) : (
+  <div className="w-20 h-20 rounded-full bg-film-100 animate-pulse" />
+)}
       </div>
 
       <div className="text-center">
