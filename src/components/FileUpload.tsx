@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect} from "react";
 import { Film, FolderOpen } from "lucide-react";
 import LottiePlayer from "./LottiePlayer";
 import { cn } from "@/lib/utils";
@@ -11,6 +11,7 @@ import { MAX_FILE_SIZE, WARNING_FILE_SIZE } from "@/lib/types";
 interface Props {
   onFileSelect: (file: File) => void;
   currentFile: File | null;
+  fileError: string;
 }
 
 function fmt(bytes: number) {
@@ -26,7 +27,11 @@ function formatDuration(seconds: number) {
     .padStart(2, "0")}`;
 }
 
-export default function FileUpload({ onFileSelect, currentFile }: Props) {
+export default function FileUpload({
+  onFileSelect,
+  currentFile,
+  fileError,
+}: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
 
   const [dragging, setDragging] = useState(false);
@@ -50,6 +55,17 @@ export default function FileUpload({ onFileSelect, currentFile }: Props) {
 
   const [error, setError] = useState("");
   const [warning, setWarning] = useState("");
+  
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "o") {
+        e.preventDefault();
+        inputRef.current?.click();
+      }
+    };
+    document.addEventListener("keydown", handler);
+    return () => document.removeEventListener("keydown", handler);
+  }, []);
 
   const handleFile = (file: File) => {
     setError("");
@@ -74,10 +90,11 @@ export default function FileUpload({ onFileSelect, currentFile }: Props) {
 
     // Soft warning
     if (file.size > WARNING_FILE_SIZE) {
+      const estimatedMinutes = Math.max(1, Math.round(file.size / (100 * 1024 * 1024)));
       setWarning(
         `Large file detected (${formatBytes(
           file.size
-        )}). This may cause slow performance on low-end devices.`
+        )}). Processing may take ~${estimatedMinutes} minutes and affect performance on low-memory devices.`
       );
     }
 
@@ -150,9 +167,16 @@ export default function FileUpload({ onFileSelect, currentFile }: Props) {
       <Film size={18} className="text-film-600 shrink-0" />
 
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-[var(--text)] truncate">
-          {currentFile?.name}
-        </p>
+        <div className="flex items-center gap-2 mb-0.5">
+          <p className="text-sm font-medium text-[var(--text)] truncate">
+            {currentFile?.name}
+          </p>
+          {currentFile && (
+            <span className="px-2 py-0.5 bg-gray-700 text-white font-bold tracking-wider rounded text-[10px] uppercase">
+              {currentFile.name.includes('.') ? currentFile.name.split('.').pop() : 'VIDEO'}
+            </span>
+          )}
+        </div>
 
         <p className="text-xs text-[var(--muted)]">
           {formatBytes(currentFile?.size ?? 0)}
@@ -171,6 +195,18 @@ export default function FileUpload({ onFileSelect, currentFile }: Props) {
         <span className="text-[var(--muted)] ml-1">(Ctrl+O)</span>
       </button>
 
+      <div className="flex items-center gap-2 px-4 py-2 bg-[var(--surface)] border border-[var(--border)] rounded-lg text-sm font-heading font-medium text-[var(--muted)]">
+      <FolderOpen size={14} />
+        MP4 / MOV / AVI / WebM
+      </div>
+      <p className="text-xs text-gray-500">
+        Supports: MP4, MOV, AVI, MKV, WebM, and most video formats
+      </p>
+      {fileError && (
+        <p className="text-xs text-red-500 mt-2 font-medium">
+          {fileError}
+        </p>
+      )}
       <input
         ref={inputRef}
         type="file"
@@ -209,6 +245,7 @@ export default function FileUpload({ onFileSelect, currentFile }: Props) {
           : "border-[var(--border)] bg-[var(--bg)] hover:border-film-400 hover:bg-film-50/40"
       )}
     >
+<<<<<<< HEAD
       <div className="w-20 h-20 opacity-80 group-hover:opacity-100 transition-opacity group-hover:scale-110 duration-200 flex items-center justify-center">
         {animationData ? (
           <LottiePlayer animationData={animationData} loop autoplay />
@@ -221,12 +258,17 @@ export default function FileUpload({ onFileSelect, currentFile }: Props) {
         <p className="font-heading font-semibold text-[var(--text)] text-base">
           Drop a video file here
       <div className="w-20 h-20 opacity-80 group-hover:opacity-100 transition">
+=======
+      <div className="w-20 h-20 opacity-80 group-hover:opacity-100 transition-opacity group-hover:scale-110 duration-200">
+>>>>>>> origin/main
         <LottiePlayer animationData={uploadAnim} loop autoplay />
       </div>
 
       <div className="text-center">
-        <p className="font-semibold text-[var(--text)]">
-          {dragging ? "Release to upload" : "Drag & Drop your video here"}
+        <p className="font-heading font-semibold text-[var(--text)] text-base">
+          {dragging
+            ? "Release to upload"
+            : "Drag & Drop your video in here"}
         </p>
 
         <p className="text-sm text-[var(--muted)] mt-1">
@@ -236,38 +278,42 @@ export default function FileUpload({ onFileSelect, currentFile }: Props) {
 
       <div className="flex items-center gap-2 px-4 py-2 bg-[var(--surface)] border border-[var(--border)] rounded-lg text-sm font-heading font-medium text-[var(--muted)]">
 
-        <p className="text-xs text-[var(--muted)] mt-2">
+        <p className="text-xs text-[var(--muted)] mt-2 font-heading">
           Ctrl+O / Cmd+O
         </p>
       </div>
 
-      <div className="flex items-center gap-2 px-4 py-2 bg-[var(--surface)] border border-[var(--border)] rounded-lg text-sm text-[var(--muted)]">
+      <div className="flex items-center gap-2 px-4 py-2 bg-[var(--surface)] border border-[var(--border)] rounded-lg text-sm font-heading font-medium text-[var(--muted)]">
         <FolderOpen size={14} />
         MP4 / MOV / AVI / WebM
       </div>
 
       <p className="text-xs text-gray-500 text-center">
-        Supports most common video formats up to 2GB
+        Supports: MP4, MOV, AVI, MKV, WebM, and most video formats up to 2GB
       </p>
 
-      {/* Show file size preview if file exists */}
+      {fileError && (
+        <p className="text-sm text-red-500 text-center">{fileError}</p>
+      )}
+
       {currentFile && (
         <p className="text-xs text-[var(--muted)] mt-2">
           Selected: {formatBytes(currentFile.size)}
         </p>
       )}
 
-      <input
-        ref={inputRef}
-        type="file"
-        accept="video/*"
-        className="hidden"
-        onChange={(e) => {
-          const f = e.target.files?.[0];
-          if (f) handleFile(f);
-        }}
-      />
-    </div>
+        <input
+          ref={inputRef}
+          type="file"
+          accept="video/*"
+          className="hidden"
+          onChange={(e) => {
+            const f = e.target.files?.[0];
+
+            if (f) handleFile(f);
+          }}
+        />
+      </div>
   );
 
   return (

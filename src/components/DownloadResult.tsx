@@ -1,9 +1,13 @@
 "use client";
 
+<<<<<<< HEAD
 import { useEffect, useState } from "react";
 import { useState } from "react";
+=======
+import { useState, useEffect } from "react";
+>>>>>>> origin/main
 import { ExportResult } from "@/lib/types";
-import { formatBytes } from "@/lib/ffmpeg";
+import { formatBytes } from "@/lib/utils";
 import { Download, RotateCcw, Share2, AlertCircle } from "lucide-react";
 import LottiePlayer from "./LottiePlayer";
 import successAnim from "@/lib/lottie/success.json";
@@ -15,12 +19,17 @@ const SHARE_TWEET_TEXT =
 interface Props {
   result: ExportResult;
   onReset: () => void;
+  soundOnCompletion: boolean;
 }
 
+<<<<<<< HEAD
 export default function DownloadResult({ result, onReset }: Props) {
   const [animationData, setAnimationData] = useState<object | null>(null);
 
   const filename = `reframe_${result.width}x${result.height}.${result.format}`;
+=======
+export default function DownloadResult({ result, onReset, soundOnCompletion }: Props) {
+>>>>>>> origin/main
   const defaultName = `reframe_${result.width}x${result.height}`;
   const [name, setName] = useState(defaultName);
 
@@ -31,6 +40,7 @@ export default function DownloadResult({ result, onReset }: Props) {
   const shareHref = `https://x.com/intent/tweet?text=${encodeURIComponent(SHARE_TWEET_TEXT)}`;
 
   useEffect(() => {
+<<<<<<< HEAD
     let mounted = true;
 
     import("@/lib/lottie/success.json").then((data) => {
@@ -43,6 +53,18 @@ export default function DownloadResult({ result, onReset }: Props) {
       mounted = false;
     };
   }, []);
+=======
+    if (soundOnCompletion) {
+      const audio = new Audio("/sounds/export-complete.mp3");
+      audio.play().catch(console.error);
+    }
+  }, [soundOnCompletion]);
+  const handleReset = () => {
+    if (window.confirm("This will clear the current video and all settings. Continue?")) {
+      onReset();
+    }
+  };
+>>>>>>> origin/main
 
   return (
     <div className="p-5 bg-[var(--surface)] border border-[var(--border)] rounded-xl space-y-4">
@@ -142,8 +164,8 @@ export default function DownloadResult({ result, onReset }: Props) {
           download={isValid ? filename : undefined}
           className={cn(
             "flex-1 min-w-[10rem] flex items-center justify-center gap-2 py-3 text-white text-sm font-heading font-bold uppercase tracking-wide rounded-lg transition-all",
-            isValid 
-              ? "bg-film-600 hover:bg-film-700 hover:scale-[1.01] active:scale-[0.99] cursor-pointer" 
+            isValid
+              ? "bg-film-600 hover:bg-film-700 hover:scale-[1.01] active:scale-[0.99] cursor-pointer"
               : "bg-film-600/50 cursor-not-allowed"
           )}
           onClick={(e) => {
@@ -166,7 +188,7 @@ export default function DownloadResult({ result, onReset }: Props) {
           type="button"
           title="Reset and upload a new video"
           aria-label="Upload a new video"
-          onClick={onReset}
+          onClick={handleReset}
           className="flex items-center gap-2 px-4 py-3 border border-[var(--border)] text-[var(--muted)] text-sm rounded-lg hover:bg-[var(--bg)] transition-colors"
         >
           <RotateCcw size={14} />
